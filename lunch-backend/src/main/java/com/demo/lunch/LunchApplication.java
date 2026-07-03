@@ -1,5 +1,5 @@
+//该类为springboot的启动类
 package com.demo.lunch;
-
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 

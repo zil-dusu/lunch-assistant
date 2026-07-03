@@ -1,3 +1,4 @@
+//该类为service类,用于接收前端发送的请求并处理
 package com.demo.lunch.service;
 
 import com.demo.lunch.algorithm.LRUCache;
