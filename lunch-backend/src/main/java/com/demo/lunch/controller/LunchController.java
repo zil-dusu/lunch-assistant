@@ -1,3 +1,4 @@
+//该类为controller,用于响应请求
 package com.demo.lunch.controller;
 
 import com.demo.lunch.entity.Food;
