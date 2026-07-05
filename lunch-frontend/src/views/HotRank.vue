@@ -19,7 +19,7 @@
             <span class="food-name">{{ food.name }}</span>
           </template>
           <template #label>
-            {{ food.category }} | 📍 {{ food.source }}
+            {{ food.category }} | {{ food.spicy === '辣' ? '🌶️' : '🥬' }}{{ food.spicy }} | 📍 {{ food.source }}
           </template>
           <template #value>
             <span class="hot-count">🔥 {{ food.hotCount }}</span>

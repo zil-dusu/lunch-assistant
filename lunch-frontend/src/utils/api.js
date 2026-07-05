@@ -31,20 +31,27 @@ export function getUserId() {
 
 // ==================== API 接口 ====================
 
-/** 获取所有菜品（可按分类过滤） */
-export function getFoods(category = null) {
-  const params = category ? { category } : {}
+/** 获取所有菜品（可按分类和辣度过滤） */
+export function getFoods(category = null, spicy = null) {
+  const params = {}
+  if (category) params.category = category
+  if (spicy) params.spicy = spicy
   return api.get('/foods', { params })
 }
 
-/** 获取所有分类 */
+/** 获取所有分类（米饭/面食/小吃） */
 export function getCategories() {
   return api.get('/categories')
 }
 
+/** 获取辣度选项 */
+export function getSpicies() {
+  return api.get('/spicies')
+}
+
 /** 随机推荐 */
-export function recommend({ userId, category, fromFav, excludeId }) {
-  return api.post('/recommend', { userId, category, fromFav, excludeId })
+export function recommend({ userId, category, spicy, fromFav, excludeId }) {
+  return api.post('/recommend', { userId, category, spicy, fromFav, excludeId })
 }
 
 /** 切换收藏状态 */
