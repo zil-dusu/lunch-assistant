@@ -14,7 +14,10 @@ public class Food {
     private String name;
 
     @Column(length = 50)
-    private String category;   // 辣, 不辣, 面食, 米饭
+    private String category;   // 米饭, 面食
+
+    @Column(length = 10)
+    private String spicy;      // 辣, 不辣
 
     @Column(length = 100)
     private String source;     // 食堂/店铺名
@@ -46,6 +49,14 @@ public class Food {
 
     public void setCategory(String category) {
         this.category = category;
+    }
+
+    public String getSpicy() {
+        return spicy;
+    }
+
+    public void setSpicy(String spicy) {
+        this.spicy = spicy;
     }
 
     public String getSource() {
