@@ -9,7 +9,7 @@
       <!-- 收藏列表 -->
       <van-cell-group v-else inset>
         <van-swipe-cell v-for="food in favList" :key="food.id">
-          <van-cell :title="food.name" :label="`${food.category} | ${food.source}`" center>
+          <van-cell :title="food.name" :label="`${food.category} | ${food.spicy === '辣' ? '🌶️' : '🥬'}${food.spicy} | ${food.source}`" center>
             <template #value>
               <span style="color: #ff6b35">🔥 {{ food.hotCount }}</span>
             </template>

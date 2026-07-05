@@ -3,6 +3,7 @@
  * 统一封装 axios 请求，管理用户身份
  */
 import axios from 'axios'
+import { v4 as uuidv4 } from 'uuid'
 
 // 创建 axios 实例
 const api = axios.create({
@@ -19,8 +20,10 @@ const api = axios.create({
 export function getUserId() {
   let userId = localStorage.getItem('lunch_user_id')
   if (!userId) {
-    // 使用 crypto.randomUUID() 生成 UUID（现代浏览器都支持）
-    userId = crypto.randomUUID()
+    // 优先使用 crypto.randomUUID()，不支持则用 uuid 库（兼容非 HTTPS）
+    userId = typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : uuidv4()
     localStorage.setItem('lunch_user_id', userId)
   }
   return userId
@@ -28,20 +31,27 @@ export function getUserId() {
 
 // ==================== API 接口 ====================
 
-/** 获取所有菜品（可按分类过滤） */
-export function getFoods(category = null) {
-  const params = category ? { category } : {}
+/** 获取所有菜品（可按分类和辣度过滤） */
+export function getFoods(category = null, spicy = null) {
+  const params = {}
+  if (category) params.category = category
+  if (spicy) params.spicy = spicy
   return api.get('/foods', { params })
 }
 
-/** 获取所有分类 */
+/** 获取所有分类（米饭/面食/小吃） */
 export function getCategories() {
   return api.get('/categories')
 }
 
+/** 获取辣度选项 */
+export function getSpicies() {
+  return api.get('/spicies')
+}
+
 /** 随机推荐 */
-export function recommend({ userId, category, fromFav, excludeId }) {
-  return api.post('/recommend', { userId, category, fromFav, excludeId })
+export function recommend({ userId, category, spicy, fromFav, excludeId }) {
+  return api.post('/recommend', { userId, category, spicy, fromFav, excludeId })
 }
 
 /** 切换收藏状态 */

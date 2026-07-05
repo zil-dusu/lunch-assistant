@@ -6,7 +6,7 @@
       <p class="subtitle">今天不用愁，随机帮你选！</p>
     </div>
 
-    <!-- ===== 分类筛选 ===== -->
+    <!-- ===== 分类筛选（米饭/面食/小吃） ===== -->
     <div class="filter-section">
       <van-button
         v-for="cat in categories"
@@ -17,7 +17,7 @@
         @click="selectCategory(cat)"
         class="filter-btn"
       >
-        {{ cat }}
+        {{ cat === '米饭' ? '🍚' : cat === '面食' ? '🍜' : cat === '小吃' ? '🍢' : '' }} {{ cat }}
       </van-button>
       <van-button
         :type="selectedCategory === null ? 'primary' : 'default'"
@@ -27,6 +27,30 @@
         class="filter-btn"
       >
         全部
+      </van-button>
+    </div>
+
+    <!-- ===== 辣度筛选 ===== -->
+    <div class="filter-section">
+      <van-button
+        v-for="s in spicies"
+        :key="s"
+        :type="selectedSpicy === s ? 'danger' : 'default'"
+        size="small"
+        round
+        @click="selectSpicy(s)"
+        class="filter-btn"
+      >
+        {{ s === '辣' ? '🌶️' : '🥬' }} {{ s }}
+      </van-button>
+      <van-button
+        :type="selectedSpicy === null ? 'danger' : 'default'"
+        size="small"
+        round
+        @click="selectSpicy(null)"
+        class="filter-btn"
+      >
+        不限辣度
       </van-button>
     </div>
 
@@ -47,15 +71,12 @@
       <Transition name="card-pop" mode="out-in">
         <div class="result-card" v-if="currentFood && !rolling" :key="currentFood.id">
           <div class="card-sparkle">✨</div>
-          <van-image
-            round
-            width="80"
-            height="80"
-            src="/food-placeholder.png"
-            class="food-img"
-          />
+          <div class="food-emoji">{{ categoryEmoji }}</div>
           <h2 class="food-name">{{ currentFood.name }}</h2>
           <van-tag type="primary" size="medium">{{ currentFood.category }}</van-tag>
+          <van-tag :type="currentFood.spicy === '辣' ? 'danger' : 'success'" size="medium" style="margin-left: 6px">
+            {{ currentFood.spicy === '辣' ? '🌶️' : '🥬' }} {{ currentFood.spicy }}
+          </van-tag>
           <p class="food-source">📍 {{ currentFood.source }}</p>
           <div class="hot-badge">
             <span class="hot-flame">🔥</span> 热度 {{ currentFood.hotCount }}
@@ -146,9 +167,11 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { computed } from 'vue'
 import {
   getUserId,
   getCategories,
+  getSpicies,
   recommend,
   toggleFavorite,
 } from '../utils/api.js'
@@ -156,7 +179,9 @@ import { showToast, showFailToast } from 'vant'
 
 const userId = getUserId()
 const categories = ref([])
+const spicies = ref([])
 const selectedCategory = ref(null)
+const selectedSpicy = ref(null)
 const currentFood = ref(null)
 const loading = ref(false)
 const loadingFav = ref(false)
@@ -178,15 +203,29 @@ const allFoodNames = [
 
 onMounted(async () => {
   try {
-    const res = await getCategories()
-    categories.value = res.data
+    const [catRes, spiRes] = await Promise.all([
+      getCategories(),
+      getSpicies(),
+    ])
+    categories.value = catRes.data
+    spicies.value = spiRes.data
   } catch (e) {
-    console.error('获取分类失败', e)
+    console.error('获取筛选条件失败', e)
   }
+})
+
+// 根据分类显示对应 emoji
+const categoryEmoji = computed(() => {
+  const map = { '米饭': '🍚', '面食': '🍜', '小吃': '🍢' }
+  return currentFood.value ? (map[currentFood.value.category] || '🍱') : '🍱'
 })
 
 function selectCategory(cat) {
   selectedCategory.value = cat
+}
+
+function selectSpicy(sp) {
+  selectedSpicy.value = sp
 }
 
 // ===== 滚动抽选动画 =====
@@ -235,6 +274,7 @@ async function doRecommend(fromFav) {
     recommend({
       userId,
       category: fromFav ? null : selectedCategory.value,
+      spicy: fromFav ? null : selectedSpicy.value,
       fromFav,
       excludeId: null,
     }).catch(e => e), // 捕获错误不中断
@@ -264,6 +304,7 @@ async function changeOne() {
     recommend({
       userId,
       category: selectedCategory.value,
+      spicy: selectedSpicy.value,
       fromFav: false,
       excludeId: lastExcludeId.value,
     }).catch(e => e),
@@ -432,9 +473,16 @@ async function toggleFav() {
   75%  { transform: rotate(-10deg) scale(0.9); }
 }
 
-.food-img {
-  margin-bottom: 12px;
+.food-emoji {
+  width: 80px;
+  height: 80px;
+  line-height: 80px;
+  font-size: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #fff6e5, #ffe8d6);
+  margin: 0 auto 12px;
   animation: imgPulse 2s ease-in-out infinite;
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.15);
 }
 
 @keyframes imgPulse {
