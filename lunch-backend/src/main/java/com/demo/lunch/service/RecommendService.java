@@ -32,10 +32,22 @@ public class RecommendService {
      * 普通随机推荐
      * 使用 LRU 缓存记录该用户最近推荐过的菜品，避免短时间内重复
      */
-    public Food randomRecommend(String category, String userId, Long excludeId) {
-        List<Food> candidates = (category == null || category.isEmpty())
-            ? foodRepo.findAll()
-            : foodRepo.findByCategory(category);
+    public Food randomRecommend(String category, String spicy, String userId, Long excludeId) {
+        List<Food> candidates = foodRepo.findAll();
+
+        // 按分类（米饭/面食）过滤
+        if (category != null && !category.isEmpty()) {
+            candidates = candidates.stream()
+                .filter(f -> category.equals(f.getCategory()))
+                .toList();
+        }
+
+        // 按辣度过滤
+        if (spicy != null && !spicy.isEmpty()) {
+            candidates = candidates.stream()
+                .filter(f -> spicy.equals(f.getSpicy()))
+                .toList();
+        }
 
         if (excludeId != null) {
             Long exId = excludeId;
@@ -94,47 +106,19 @@ public class RecommendService {
         return history != null ? history.values() : Collections.emptyList();
     }
 
-    // ===== 多种排序算法演示 =====
+    // ===== 归并排序演示 =====
 
     /**
-     * 使用指定排序算法对所有菜品排序
-     * @param algorithm 算法名：bubble / quick / merge / heap / counting
-     * @param by        排序字段：hotCount / name / category
-     * @param desc      是否降序
-     * @return 排序结果 + 耗时信息
+     * 使用归并排序对所有菜品排序 O(n log n)
      */
-    public Map<String, Object> getFoodsSorted(String algorithm, String by, boolean desc) {
+    public Map<String, Object> sortByMerge(String by, boolean desc) {
         List<Food> foods = new ArrayList<>(foodRepo.findAll());
-
         Comparator<Food> cmp = buildComparator(by, desc);
 
-        long nanos;
-        switch (algorithm.toLowerCase()) {
-            case "bubble":
-                nanos = SortAlgorithms.measureTime(() -> SortAlgorithms.bubbleSort(foods, cmp));
-                break;
-            case "merge":
-                nanos = SortAlgorithms.measureTime(() -> SortAlgorithms.mergeSort(foods, cmp));
-                break;
-            case "heap":
-                nanos = SortAlgorithms.measureTime(() -> SortAlgorithms.heapSort(foods, cmp));
-                break;
-            case "counting":
-                // 计数排序仅适用于整型字段
-                if ("hotCount".equals(by)) {
-                    nanos = SortAlgorithms.measureTime(() ->
-                        SortAlgorithms.countingSortByInt(foods, f -> desc ? -f.getHotCount() : f.getHotCount()));
-                } else {
-                    nanos = SortAlgorithms.measureTime(() -> SortAlgorithms.quickSort(foods, cmp));
-                }
-                break;
-            default: // "quick"
-                nanos = SortAlgorithms.measureTime(() -> SortAlgorithms.quickSort(foods, cmp));
-                break;
-        }
+        long nanos = SortAlgorithms.measureTime(() -> SortAlgorithms.mergeSort(foods, cmp));
 
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("algorithm", algorithm);
+        result.put("algorithm", "归并排序 (Merge Sort) O(n log n)");
         result.put("timeNanos", nanos);
         result.put("timeMillis", String.format("%.3f ms", nanos / 1_000_000.0));
         result.put("data", foods);
@@ -171,37 +155,13 @@ public class RecommendService {
         return result;
     }
 
-    // ===== 算法对比：一次性跑所有排序算法，比较耗时 =====
-
-    public Map<String, Object> compareAllSortAlgorithms(String by, boolean desc) {
-        Comparator<Food> cmp = buildComparator(by, desc);
-
-        Map<String, Object> result = new LinkedHashMap<>();
-        result.put("sortedBy", by);
-        result.put("descending", desc);
-        Map<String, String> times = new LinkedHashMap<>();
-
-        for (String algo : List.of("bubble", "quick", "merge", "heap")) {
-            List<Food> copy = new ArrayList<>(foodRepo.findAll());
-            long nanos;
-            switch (algo) {
-                case "bubble" -> nanos = SortAlgorithms.measureTime(() -> SortAlgorithms.bubbleSort(copy, cmp));
-                case "merge"  -> nanos = SortAlgorithms.measureTime(() -> SortAlgorithms.mergeSort(copy, cmp));
-                case "heap"   -> nanos = SortAlgorithms.measureTime(() -> SortAlgorithms.heapSort(copy, cmp));
-                default       -> nanos = SortAlgorithms.measureTime(() -> SortAlgorithms.quickSort(copy, cmp));
-            }
-            times.put(algo, String.format("%.3f ms", nanos / 1_000_000.0));
-        }
-        result.put("timings", times);
-        return result;
-    }
-
     // ===== 工具方法 =====
 
     private Comparator<Food> buildComparator(String by, boolean desc) {
         Comparator<Food> cmp = switch (by) {
             case "name"     -> Comparator.comparing(Food::getName);
             case "category" -> Comparator.comparing(Food::getCategory);
+            case "spicy"    -> Comparator.comparing(Food::getSpicy);
             default         -> Comparator.comparingInt(Food::getHotCount); // hotCount
         };
         return desc ? cmp.reversed() : cmp;

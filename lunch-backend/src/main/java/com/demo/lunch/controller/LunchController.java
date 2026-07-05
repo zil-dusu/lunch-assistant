@@ -24,10 +24,17 @@ public class LunchController {
     // ==================== 菜品查询 ====================
 
     @GetMapping("/foods")
-    public List<Food> getFoods(@RequestParam(required = false) String category) {
-        return (category == null || category.isEmpty())
-            ? foodRepo.findAll()
-            : foodRepo.findByCategory(category);
+    public List<Food> getFoods(
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String spicy) {
+        List<Food> foods = foodRepo.findAll();
+        if (category != null && !category.isEmpty()) {
+            foods = foods.stream().filter(f -> category.equals(f.getCategory())).toList();
+        }
+        if (spicy != null && !spicy.isEmpty()) {
+            foods = foods.stream().filter(f -> spicy.equals(f.getSpicy())).toList();
+        }
+        return foods;
     }
 
     @GetMapping("/categories")
@@ -39,12 +46,22 @@ public class LunchController {
             .toList();
     }
 
+    @GetMapping("/spicies")
+    public List<String> getSpicies() {
+        return foodRepo.findAll().stream()
+            .map(Food::getSpicy)
+            .distinct()
+            .sorted()
+            .toList();
+    }
+
     // ==================== 推荐 ====================
 
     @PostMapping("/recommend")
     public ResponseEntity<?> recommend(@RequestBody Map<String, Object> body) {
         String userId = (String) body.getOrDefault("userId", "anonymous");
         String category = (String) body.getOrDefault("category", null);
+        String spicy = (String) body.getOrDefault("spicy", null);
         Boolean fromFav = (Boolean) body.getOrDefault("fromFav", false);
 
         Long excludeId = null;
@@ -55,7 +72,7 @@ public class LunchController {
 
         Food result = fromFav
             ? recommendService.randomFromFavorites(userId, excludeId)
-            : recommendService.randomRecommend(category, userId, excludeId);
+            : recommendService.randomRecommend(category, spicy, userId, excludeId);
 
         if (result == null) {
             return ResponseEntity.badRequest().body(
@@ -101,25 +118,17 @@ public class LunchController {
     // ==================== 算法演示 ====================
 
     /**
-     * 用指定排序算法对所有菜品排序
+     * 归并排序：对所有菜品排序
      *
-     * GET /api/algorithm/sort?algorithm=quick&by=hotCount&desc=true
+     * GET /api/algorithm/sort?by=hotCount&desc=true
      *
-     * 支持的算法:
-     *   bubble  — 冒泡排序 O(n²) 稳定
-     *   quick   — 快速排序 O(n log n)
-     *   merge   — 归并排序 O(n log n) 稳定
-     *   heap    — 堆排序   O(n log n) 原地
-     *   counting— 计数排序 O(n+k)（仅 by=hotCount 时有效）
-     *
-     * 排序字段 by: hotCount / name / category
+     * 排序字段 by: hotCount / name / category / spicy
      */
     @GetMapping("/algorithm/sort")
     public Map<String, Object> sortFoods(
-            @RequestParam(defaultValue = "quick") String algorithm,
             @RequestParam(defaultValue = "hotCount") String by,
             @RequestParam(defaultValue = "true") boolean desc) {
-        return recommendService.getFoodsSorted(algorithm, by, desc);
+        return recommendService.sortByMerge(by, desc);
     }
 
     /**
@@ -132,17 +141,5 @@ public class LunchController {
             @RequestParam(defaultValue = "5") int k,
             @RequestParam(defaultValue = "hotCount") String by) {
         return recommendService.getTopKByHeap(k, by);
-    }
-
-    /**
-     * 一次性跑遍所有排序算法，对比耗时
-     *
-     * GET /api/algorithm/compare?by=hotCount
-     */
-    @GetMapping("/algorithm/compare")
-    public Map<String, Object> compareAlgorithms(
-            @RequestParam(defaultValue = "hotCount") String by,
-            @RequestParam(defaultValue = "true") boolean desc) {
-        return recommendService.compareAllSortAlgorithms(by, desc);
     }
 }
