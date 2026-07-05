@@ -3,6 +3,7 @@
  * 统一封装 axios 请求，管理用户身份
  */
 import axios from 'axios'
+import { v4 as uuidv4 } from 'uuid'
 
 // 创建 axios 实例
 const api = axios.create({
@@ -19,8 +20,10 @@ const api = axios.create({
 export function getUserId() {
   let userId = localStorage.getItem('lunch_user_id')
   if (!userId) {
-    // 使用 crypto.randomUUID() 生成 UUID（现代浏览器都支持）
-    userId = crypto.randomUUID()
+    // 优先使用 crypto.randomUUID()，不支持则用 uuid 库（兼容非 HTTPS）
+    userId = typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : uuidv4()
     localStorage.setItem('lunch_user_id', userId)
   }
   return userId

@@ -1,0 +1,21 @@
+# 统一换行符为 LF，避免跨平台协作差异
+* text=auto
+
+# Java 源码
+*.java text eol=lf
+
+# 前端源码
+*.js text eol=lf
+*.vue text eol=lf
+*.css text eol=lf
+*.json text eol=lf
+*.html text eol=lf
+
+# 配置文件
+*.yml text eol=lf
+*.xml text eol=lf
+
+# 二进制文件
+*.png binary
+*.jpg binary
+*.jar binary
