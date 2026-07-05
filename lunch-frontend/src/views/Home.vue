@@ -77,7 +77,7 @@
           <van-tag :type="currentFood.spicy === '辣' ? 'danger' : 'success'" size="medium" style="margin-left: 6px">
             {{ currentFood.spicy === '辣' ? '🌶️' : '🥬' }} {{ currentFood.spicy }}
           </van-tag>
-          <p class="food-source">📍 {{ currentFood.source }}</p>
+          <p class="food-source">🛵 {{ currentFood.source }}</p>
           <div class="hot-badge">
             <span class="hot-flame">🔥</span> 热度 {{ currentFood.hotCount }}
           </div>
